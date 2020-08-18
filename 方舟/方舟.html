@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>方舟</title>
+    <link rel="icon" href="img/图标.png">
+    <style>
+        #id-canvas {
+            border: 1px black solid;
+        }
+    </style>
+    <script src="js/background.js"></script>
+    <script src="js/kroos.js"></script>
+    <script src="js/doctor.js"></script>
+    <script src="js/bug.js"></script>
+    <script src="js/game.js"></script>
+</head>
+<body>
+    <canvas id="id-canvas" width="800" height="600"></canvas>
+</body>
+<script>
+
+    var imageFromPath = function(path) {
+        var img = new Image()
+        img.src = path
+        return img
+    }
+
+    var main = function() {
+
+        var kroos = Kroos()
+
+        var doctor = Doctor()
+
+        var game = Game()
+
+        var bg = Background()
+
+        var bugs = []
+        for (var p of _bugs) {
+            var bug = Bug(p)
+            bugs.push(bug)
+        }
+
+        // 监听鼠标事件
+        var enableDrag = false
+        game.canvas.addEventListener('mousedown', function(e) {
+            var x = e.offsetX
+            var y = e.offsetY
+            if (kroos.被扼住了脖颈(x, y)) {
+                enableDrag = true
+            }
+        })
+
+        game.canvas.addEventListener('mousemove', function(e) {
+            var x = e.offsetX
+            var y = e.offsetY
+            if (enableDrag) {
+                kroos.x = x
+                kroos.y = y
+            }
+        })
+
+        game.canvas.addEventListener('mouseup', function() {
+            enableDrag = false
+        })
+
+        game.update = function() {
+            if (game.paused) {
+                return
+            }
+
+            kroos.move()
+
+            if (kroos.collide(doctor)) {
+                kroos.反弹()
+            }
+
+            for (var bug of bugs) {
+                if (kroos.collide(bug) && bug.alive) {
+                    bug.die()
+                    kroos.反弹()
+                    game.score ++
+                }
+            }
+
+            if (game.left) {
+                doctor.左横()
+            }
+            if (game.right) {
+                doctor.右跳()
+            }
+        }
+
+        game.draw = function() {
+            var k = kroos
+            var d = doctor
+            if (k.y + k.h >550) {
+                k.speedY = 0
+                game.context.clearRect(0, 0, 800, 600)
+                game.drawImage(bg.image, bg.x, bg.y, bg.w, bg.h)
+                game.context.font="60px Georgia"
+                game.context.fillText('GAME OVER', 300, 300)
+                return
+            }
+
+            if (game.score == 5) {
+                game.context.clearRect(0, 0, 800, 600)
+                game.drawImage(bg.image, bg.x, bg.y, bg.w, bg.h)
+                game.context.font="60px Georgia"
+                game.context.fillText('MISSION COMPLETED', 100, 300)
+                return
+            }
+            game.drawImage(bg.image, bg.x, bg.y, bg.w, bg.h)
+            game.drawImage(k.image, k.x, k.y, k.w, k.h)
+            game.drawImage(d.image, d.x, d.y, d.w, d.h)
+
+            for (var b of bugs) {
+                if (b.alive) {
+                    game.drawImage(b.image, b.x, b.y, b.w, b.h)
+                }
+            }
+        }
+
+    }
+
+    main()
+
+</script>
+</html>
